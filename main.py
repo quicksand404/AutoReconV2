@@ -7,6 +7,7 @@ import platform
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask, jsonify, request
+import threading
 
 app = Flask(__name__)
 
@@ -101,24 +102,73 @@ def directory_buster(domain, wordlist, max_threads=10, timeout=5):
 
 @app.route('/reconn/<string:domain_name>', methods=['POST'])
 def imp(domain_name):
-    try:
-        domain_ip = socket.gethostbyname(domain_name)
-        whois_info = whois.whois(domain_name)
-        ip_info = cmd(["curl", "-X", "GET", "ipinfo.io/"+domain_ip+"?token=fb0a46bcf7cadb"])
-        nmap_scan = nmap_scan(domain_name)
-        dns_info = dns_dumpster(domain_name)
-        trace = tracerout(domain_name)
-        return jsonify(
-            {"domain": domain_name},
-            {"ip": domain_ip},
-            {"whois":whois_info},
-            {"ipinfo":ip_info},
-            {"NMap":nmap_scan},
-            {"DNS":dns_info},
-            {"Trace Route":trace},
-            ), 200
-    except socket.gaierror:
-        return jsonify({"error": f"Unable to resolve domain: {domain_name}"}), 400
+    results = {
+        "domain": domain_name,
+        "ip": None,
+        "whois": None,
+        "ipinfo": None,
+        "NMap": None,
+        "DNS": None,
+        "Trace Route": None,
+    }
+
+    def resolve_ip():
+        try:
+            results["ip"] = socket.gethostbyname(domain_name)
+        except socket.gaierror:
+            results["ip"] = "Unable to resolve IP"
+
+    def fetch_whois():
+        try:
+            results["whois"] = whois.whois(domain_name)
+        except Exception as e:
+            results["whois"] = f"Error fetching whois: {str(e)}"
+
+    def fetch_ipinfo():
+        try:
+            if results["ip"]:
+                results["ipinfo"] = cmd(["curl", "-X", "GET", f"ipinfo.io/{results['ip']}?token=fb0a46bcf7cadb"])
+        except Exception as e:
+            results["ipinfo"] = f"Error fetching IP info: {str(e)}"
+
+    def perform_nmap_scan():
+        try:
+            results["NMap"] = nmap_scan(domain_name)
+        except Exception as e:
+            results["NMap"] = f"Error in Nmap scan: {str(e)}"
+
+    def fetch_dns_info():
+        try:
+            results["DNS"] = dns_dumpster(domain_name)
+        except Exception as e:
+            results["DNS"] = f"Error fetching DNS info: {str(e)}"
+
+    def perform_traceroute():
+        try:
+            results["Trace Route"] = tracerout(domain_name)
+        except Exception as e:
+            results["Trace Route"] = f"Error in traceroute: {str(e)}"
+
+    # Create threads
+    threads = [
+        threading.Thread(target=resolve_ip),
+        threading.Thread(target=fetch_whois),
+        threading.Thread(target=fetch_ipinfo),
+        threading.Thread(target=perform_nmap_scan),
+        threading.Thread(target=fetch_dns_info),
+        threading.Thread(target=perform_traceroute),
+    ]
+
+    # Start all threads
+    for thread in threads:
+        thread.start()
+
+    # Wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    return jsonify(results), 200
+
     
 
 if __name__ == '__main__':
