@@ -7,7 +7,6 @@ import platform
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask, jsonify, request
-import threading
 
 app = Flask(__name__)
 
@@ -40,25 +39,32 @@ def nmap_scan(domain):
     return result
 
 def dns_dumpster(domain):
-    result = {}
+    result = {
+        "A Records" : [],
+        "MX Records" : [],
+        "NS Records" : [],
+        "TXT Records (Text)" : [],
+        "CNAME Record (Alias)" : [],
+        "SOA Record (Authority)" : []
+    }
     for rdata in dns.resolver.resolve(domain, 'A'):
-        result["A Records:"].append(rdata)
+        result["A Records"].append(rdata.to_text())
     for rdata in dns.resolver.resolve(domain, 'MX'):
-        result["MX Records:"].append(rdata)
+        result["MX Records"].append(rdata.to_text())
     for rdata in dns.resolver.resolve(domain, 'NS'):
-        result["NS Records:"].append(rdata)
+        result["NS Records"].append(rdata.to_text())
     for record in dns.resolver.resolve(domain, 'TXT'):
-        result["TXT Records (Text):"].append(record.to_text())
+        result["TXT Records (Text)"].append(record.to_text())
     try:
         for record in dns.resolver.resolve(domain, 'CNAME'):
-            result["CNAME Record (Alias):"].append(record.to_text())
+            result["CNAME Record (Alias)"].append(record.to_text())
     except dns.resolver.NoAnswer:
-        result["CNAME Record (Alias):"].append("No CNAME Record found.")
+        result["CNAME Record (Alias)"].append("No CNAME Record found.")
     try:
         for record in dns.resolver.resolve(domain, 'SOA'):
-            result["SOA Record (Authority):"].append(record.to_text())
+            result["SOA Record (Authority)"].append(record.to_text())
     except dns.resolver.NoAnswer:
-        result["SOA Record (Authority):"].append("No SOA Records found.")
+        result["SOA Record (Authority)"].append("No SOA Records found.")
     return result
 
 
@@ -89,7 +95,6 @@ def directory_buster(domain, wordlist, max_threads=10, timeout=5):
     found = []
 
     with ThreadPoolExecutor(max_threads) as executor:
-        # Create a future for each word
         futures = {executor.submit(check_url, domain, word, timeout): word for word in wordlist}
 
         for future in as_completed(futures):
@@ -100,75 +105,26 @@ def directory_buster(domain, wordlist, max_threads=10, timeout=5):
 
     return found
 
-@app.route('/reconn/<string:domain_name>', methods=['POST'])
+@app.route('/reconn/<string:domain_name>', methods=['GET'])
 def imp(domain_name):
-    results = {
-        "domain": domain_name,
-        "ip": None,
-        "whois": None,
-        "ipinfo": None,
-        "NMap": None,
-        "DNS": None,
-        "Trace Route": None,
-    }
-
-    def resolve_ip():
-        try:
-            results["ip"] = socket.gethostbyname(domain_name)
-        except socket.gaierror:
-            results["ip"] = "Unable to resolve IP"
-
-    def fetch_whois():
-        try:
-            results["whois"] = whois.whois(domain_name)
-        except Exception as e:
-            results["whois"] = f"Error fetching whois: {str(e)}"
-
-    def fetch_ipinfo():
-        try:
-            if results["ip"]:
-                results["ipinfo"] = cmd(["curl", "-X", "GET", f"ipinfo.io/{results['ip']}?token=fb0a46bcf7cadb"])
-        except Exception as e:
-            results["ipinfo"] = f"Error fetching IP info: {str(e)}"
-
-    def perform_nmap_scan():
-        try:
-            results["NMap"] = nmap_scan(domain_name)
-        except Exception as e:
-            results["NMap"] = f"Error in Nmap scan: {str(e)}"
-
-    def fetch_dns_info():
-        try:
-            results["DNS"] = dns_dumpster(domain_name)
-        except Exception as e:
-            results["DNS"] = f"Error fetching DNS info: {str(e)}"
-
-    def perform_traceroute():
-        try:
-            results["Trace Route"] = tracerout(domain_name)
-        except Exception as e:
-            results["Trace Route"] = f"Error in traceroute: {str(e)}"
-
-    # Create threads
-    threads = [
-        threading.Thread(target=resolve_ip),
-        threading.Thread(target=fetch_whois),
-        threading.Thread(target=fetch_ipinfo),
-        threading.Thread(target=perform_nmap_scan),
-        threading.Thread(target=fetch_dns_info),
-        threading.Thread(target=perform_traceroute),
-    ]
-
-    # Start all threads
-    for thread in threads:
-        thread.start()
-
-    # Wait for all threads to finish
-    for thread in threads:
-        thread.join()
-
-    return jsonify(results), 200
-
+    try:
+        domain_ip = socket.gethostbyname(domain_name)
+        whois_info = whois.whois(domain_name)
+        ip_info = cmd(["curl", "-X", "GET", "ipinfo.io/"+domain_ip+"?token=fb0a46bcf7cadb"])
+        nmap_scan_info = nmap_scan(domain_name)
+        dns_info = dns_dumpster(domain_name)
+        trace = tracerout(domain_name)
+        return jsonify(
+            {"domain": domain_name},
+            {"ip": domain_ip},
+            {"whois":whois_info},
+            {"ipinfo":ip_info},
+            {"NMap":nmap_scan_info},
+            {"DNS":dns_info},
+            {"Trace Route":trace},
+            ), 200
+    except socket.gaierror:
+        return jsonify({"error": f"Unable to resolve domain: {domain_name}"}), 400
     
 
 if __name__ == '__main__':
