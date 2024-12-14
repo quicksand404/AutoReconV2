@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    <title>AutoReconnV2</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Orbitron", sans-serif;
+            color: rgb(129, 30, 0);
+            background-color: rgb(33, 0, 0);
+        }
+
+        .home {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .title {
+            color: transparent;
+            background: #910000;
+            -webkit-background-clip: text;
+            -moz-background-clip: text;
+            background-clip: text;
+            text-shadow: 0px 3px 3px rgba(42, 0, 0, 0.5);
+            font-size: 4rem;
+            font-weight: 900;
+            font-style: oblique;
+            text-align: center;
+        }
+        h1{
+            padding: 10px;
+        }
+        .input_{
+            font-family: "Source Code Pro", monospace;
+            width: 50vw;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .output{
+            font-family: "Source Code Pro", monospace;
+            width: 80vw;
+            display: flex;
+            background-color: black;
+            font-size: 20px;
+            padding: 20px;
+            color: green;
+            border: solid rgb(95, 0, 0);
+            flex-direction: column;
+            display : none;
+        }
+        .output_1{
+            display: flex;
+        }
+        input{
+            font-family: "Source Code Pro", monospace;
+            padding: 10px;
+            border-radius: 50px 0 0 50px;
+            background-color: rgb(0, 0, 0);
+            text-align:center;
+            border-color: rgb(79, 0, 0);
+            border-right-color: none;
+            font-size: 2rem;
+            width:100%;
+            color: green;
+        }
+        button{
+            background-color: rgb(30, 0, 0);
+            border-radius: 0 50px 50px 0;
+            color:red;
+            border-color: rgb(79, 0, 0);
+            padding: 15px 20px;
+            font-size: 1.5rem;
+        }
+        button:hover{
+            background-color: rgb(145, 0, 0);
+            color:#000000;
+        }
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            font-weight: bold;
+        }
+        .dot {
+            animation: dot-blink 1.5s infinite step-start;
+        }
+        .dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+        .dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+        @keyframes dot-blink {
+            0%, 20% {
+                opacity: 0;
+            }
+            20%, 80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        .output__{
+            width: 150px;
+        }
+        ::-webkit-scrollbar{
+            width:2px;
+            background-color: #000000;
+        }
+        .print{
+            color: white;
+            background-color:#910000;
+            padding: 20px;
+            border-radius: 0 0 20px 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="home">
+        <h1 class="title">AutoReconn V2  </h1>
+        <div class="input_">
+            <input type="text" id="urlInput" placeholder="example.com">
+            <button onclick="fetchData()">Analyze</button>
+        </div><br>
+        <div class="output" id="output">
+            <p>Results</p>
+            <div class="output_1">
+                <p class="output__">Domain  -> </p>
+                <p id="domain"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">ip -></p>
+                <p id="ip"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">whois  -> </p>
+                <p id="whois"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">ipinfo  -></p>
+                <p id="ipinfo"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">subdomain  -></p>
+                <p id="subdomain" style="overflow: scroll"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">NMap  -></p>
+                <p id="NMap"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">DNS  -></p>
+                <p id="DNS"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+            <div class="output_1">
+                <p class="output__">Trace Route  -></p>
+                <p id="Trace Route"> fetching data
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                <span class="dot">.</span>
+                </p>
+            </div>
+        </div>
+        <button class='print' id="print" onclick="print()">Get a Reconn-Report.</button>
+    </div>
+    <script>
+
+        async function print() {
+            try {
+                    const response = await fetch(`http://127.0.0.1:5000/getip?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    alert(data)     //output pdf path              
+                } catch (error) {
+                    dalert("Error fetching data:");      //output pdf path      
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+        }
+
+        async function fetchData() {
+            const domainInput = document.querySelector("#urlInput").value.trim();
+            const output = document.getElementById("output");
+            const button = document.getElementById("print");
+            if (!domainInput) {
+                alert("Please enter a valid URL.");
+                return;
+            }
+            
+            const userPermission = prompt(`Do you have permission to test ${domainInput}?`, "yes/no");
+            
+            if (userPermission.toLowerCase() === "yes") {
+                output.style.display = "block";
+                button.style.display = 'block';
+                document.getElementById("domain").textContent = domainInput;     //output domain
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/getip?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("ip").textContent = data || "No data";      //output getip              
+                } catch (error) {
+                    document.getElementById("ip").textContent = "Error fetching data:";      //output getip      
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/whois?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("whois").textContent = JSON.stringify(data, null, 2);    //output whois  
+                } catch (error) {
+                    document.getElementById("whois").textContent = "Error fetching data:";   //output whois
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/ipinfo?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("ipinfo").textContent = data || "No data";  //output ipinfo  
+                } catch (error) {
+                    document.getElementById("ipinfo").textContent = "Error fetching data:";  //output ipinfo  
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/subdomain?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("subdomain").textContent = JSON.stringify(data, null, 2);   //output subdomain  
+                } catch (error) {
+                    document.getElementById("subdomain").textContent = "Error fetching data:";    //output subdomain 
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/nmap_scan?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("NMap").textContent = data || "No data";    //output NMap  
+                } catch (error) {
+                    document.getElementById("NMap").textContent = "Error fetching data:";    //output NMap 
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/dns_dumpster?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("whois").textContent = JSON.stringify(data, null, 2);  //output dns  
+                } catch (error) {
+                    document.getElementById("DNS").textContent = "Error fetching data:"; //output dns  
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/tracerout?domain_name=${encodeURIComponent(domainInput)}`);
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const data = await response.json();
+                    document.getElementById("Trace Route").textContent = data || "No data"; //output traceroute  
+                } catch (error) {
+                    document.getElementById("Trace Route").textContent = "Error fetching data:"; //output traceroute  
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred. Please check the console for details.");
+                }
+            } else {
+                alert("Access denied. Permission required.");
+            }
+        }
+    </script>
+</body>
+</html>
